@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Task List</title>
+</head>
+<body>
+    <h1>タスク一覧</h1>
+    <h2>タスク追加</h2>
+    <input type="text" id="task-input" placeholder="タスクを入力">
+    <button onclick="addTask()">追加</button>
+    
+    <table border="1">
+        <thead>
+            <tr>
+                <th>No</th>
+                <th>Title</th>
+                <th>Edit</th>
+                <th>Delete</th>
+            </tr>
+        </thead>
+        <tbody id="task-table">
+        </tbody>
+    </table>
+
+    <script>
+    // 一覧表示（今あるやつ）
+    fetch("http://127.0.0.1:8000/tasks")
+        .then(response => response.json())
+        .then(data => {
+            const table = document.getElementById("task-table");
+
+            data.forEach((task, index) => {
+                 table.appendChild(createRow(task, index));
+            });
+    });
+        //         const row = document.createElement("tr");
+
+        //         row.innerHTML = `
+        //             <td>${task.id}</td>
+        //             <td>${task.title}</td>
+        //             <td><button onclick="editTask(${task.id}, '${task.title}')">編集</button></td>
+        //             <td><button onclick="deleteTask(${task.id})">削除</button></td>
+        //         `;
+
+        //         table.appendChild(row);
+        //     });
+        // });
+    //共通処理
+    function createRow(task,index) {
+    const row = document.createElement("tr");
+
+    row.innerHTML = `
+        <td>${index + 1}</td>
+        <td class="title">${task.title}</td>
+        <td><button onclick="editTask(${task.id}, '${task.title}', this)">編集</button></td>
+        <td><button onclick="deleteTask(${task.id}, this)">削除</button></td>
+    `;
+
+    return row;
+}
+
+    // 👇 これを追加（POST）
+    function addTask() {
+        const input = document.getElementById("task-input");
+        const title = input.value;
+        
+        if (!title) return;
+            
+        fetch("http://127.0.0.1:8000/tasks", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ title: title })
+        })
+        .then(() => {
+         // 新しいデータをもう一回取得（簡単版）
+         return fetch("http://127.0.0.1:8000/tasks");
+        })
+    .then(res => res.json())
+    .then(data => {
+        const table = document.getElementById("task-table");
+        table.innerHTML = ""; // 一旦消す
+
+        data.forEach((task, index) => {
+            table.appendChild(createRow(task, index));
+        });
+    });
+
+    input.value = "";
+}
+
+
+    function editTask(id, oldTitle, btn) {
+        const newTitle = prompt("新しいタスク名を入力", oldTitle);
+
+        if (!newTitle) return;
+
+        fetch(`http://127.0.0.1:8000/tasks/${id}`, {
+            method: "PUT",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ title: newTitle })
+        })
+        .then(() => {
+            const row = btn.closest("tr");
+            row.querySelector(".title").textContent = newTitle;
+        });
+}
+    // 👇 削除
+    function deleteTask(id,btn) {
+        fetch(`http://127.0.0.1:8000/tasks/${id}`, {
+            method: "DELETE"
+        })
+        .then(() => {
+            const row = btn.closest("tr");
+            row.remove();
+
+            updateRowNumbers(); // 削除されたときのNOの更新
+        });
+}
+    
+    function updateRowNumbers() {
+    // console.log("番号更新された"); // ←追加
+        const rows = document.querySelectorAll("#task-table tr");
+
+        rows.forEach((row, index) => {
+            row.children[0].textContent = index + 1;
+        });
+    }
+    </script>
+</body>
+</html>
