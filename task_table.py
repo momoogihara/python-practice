@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from typing import List
 from typing import List, Union
 from fastapi.middleware.cors import CORSMiddleware
-
+from fastapi.responses import FileResponse
 
 from sqlalchemy import create_engine, Column, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
@@ -75,6 +75,9 @@ def get_tasks():
 
     return [{"id": t.id, "title": t.title} for t in tasks]
 
+@app.get("/")
+def read_index():
+    return FileResponse("index.html")
 
 @app.put("/tasks/{task_id}")
 def update_task(task_id: int, updated_task: Task):
