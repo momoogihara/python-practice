@@ -57,6 +57,16 @@ Base.metadata.create_all(bind=engine)
 class Task(BaseModel):
     title: str
 
+@app.get("/")
+def read_index():
+    return FileResponse("index.html")
+
+@app.get("/tasks")
+def get_tasks():
+    db = SessionLocal()
+    tasks = db.query(TaskModel).all()
+
+    return [{"id": t.id, "title": t.title} for t in tasks]
 
 @app.post("/tasks")
 def create_task(task: Task):
@@ -68,16 +78,6 @@ def create_task(task: Task):
 
     return {"message": "Task added"}
 
-@app.get("/tasks")
-def get_tasks():
-    db = SessionLocal()
-    tasks = db.query(TaskModel).all()
-
-    return [{"id": t.id, "title": t.title} for t in tasks]
-
-@app.get("/")
-def read_index():
-    return FileResponse("index.html")
 
 @app.put("/tasks/{task_id}")
 def update_task(task_id: int, updated_task: Task):
