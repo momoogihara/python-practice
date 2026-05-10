@@ -6,9 +6,12 @@
 <body>
     <h1>タスク一覧</h1>
     <h2>タスク追加</h2>
+
+    <!-- 新規タスク入力欄 -->
     <input type="text" id="task-input" placeholder="タスクを入力">
+    <!-- 追加ボタン -->
     <button onclick="addTask()">追加</button>
-    
+    <!-- タスク一覧テーブル -->
     <table border="1">
         <thead>
             <tr>
@@ -18,117 +21,129 @@
                 <th>Delete</th>
             </tr>
         </thead>
-        <tbody id="task-table">
+        
+        <!-- JavaScriptで行を追加する場所 -->
+        <tbody id="task_table">
         </tbody>
     </table>
 
     <script>
-    // 一覧表示（今あるやつ）
-    fetch("http://127.0.0.1:8000/tasks")
-        .then(response => response.json())
-        .then(data => {
-            const table = document.getElementById("task-table");
 
-            data.forEach((task, index) => {
-                 table.appendChild(createRow(task, index));
+        // APIのURL
+        // 相対パスなのでローカルでもEC2でも動く
+         const API_URL = "/tasks";
+
+        // ==========================================
+        // 初期表示
+        // ==========================================
+        // ページを開いた時にタスク一覧を取得して表示
+        loadTasks();
+        // ==========================================
+        // タスク一覧を取得してテーブルに表示
+        // ==========================================
+        function loadTasks() {
+          fetch("/tasks")
+            .then(response => response.json())
+            .then(data => {
+                const table = document.getElementById("task_table");
+                  // 一旦テーブルを空にする
+                  table.innerHTML = "";
+                // 取得したデータを1件ずつ表示
+                data.forEach((task, index) => {
+                    table.appendChild(createRow(task, index));
+                });
             });
-    });
-        //         const row = document.createElement("tr");
+        }
 
-        //         row.innerHTML = `
-        //             <td>${task.id}</td>
-        //             <td>${task.title}</td>
-        //             <td><button onclick="editTask(${task.id}, '${task.title}')">編集</button></td>
-        //             <td><button onclick="deleteTask(${task.id})">削除</button></td>
-        //         `;
+        // ==========================================
+        // 1行分の<tr>を作成
+        // ==========================================
+        function createRow(task,index) {
+          // tr要素を作成
+          const row = document.createElement("tr");
+        // 行の中身を設定
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td class="title">${task.title}</td>
+            <td><button onclick="editTask(${task.id}, '${task.title}', this)">編集</button></td>
+            <td><button onclick="deleteTask(${task.id}, this)">削除</button></td>
+        `;
+        return row;
+        }
+        // POST
+        function addTask() {
+            // 入力欄を取得
+            const input = document.getElementById("task-input");
+            // 入力された文字列
+            const title = input.value;
+             // 空文字なら何もしない
+            if (!title) return;
+            // POST送信    
+            fetch(API_URL, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({ title: title })
+            })
+            .then(() => {
+                        input.value = "";
+                        loadTasks();
+            });
+        }
+        //編集(PUT)
+        function editTask(id, btn) {
+            // クリックされたボタンの属する行
+            const row = btn.closest("tr");
+            // 現在表示されているタイトル
+            const currentTitle = row.querySelector(".title").textContent;
+            // 新しいタイトルを入力
+            const newTitle = prompt(
+                "新しいタスク名を入力",
+                currentTitle
+            );
 
-        //         table.appendChild(row);
-        //     });
-        // });
-    //共通処理
-    function createRow(task,index) {
-    const row = document.createElement("tr");
+            // キャンセルまたは空文字なら終了
+            if (!newTitle) return;
 
-    row.innerHTML = `
-        <td>${index + 1}</td>
-        <td class="title">${task.title}</td>
-        <td><button onclick="editTask(${task.id}, '${task.title}', this)">編集</button></td>
-        <td><button onclick="deleteTask(${task.id}, this)">削除</button></td>
-    `;
-
-    return row;
-}
-
-    // 👇 これを追加（POST）
-    function addTask() {
-        const input = document.getElementById("task-input");
-        const title = input.value;
-        
-        if (!title) return;
-            
-        fetch("http://127.0.0.1:8000/tasks", {
-                method: "POST",
+            // PUT送信
+            fetch(`${API_URL}/${id}`, {
+                method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
                 },
-                body: JSON.stringify({ title: title })
-        })
-        .then(() => {
-         // 新しいデータをもう一回取得（簡単版）
-         return fetch("http://127.0.0.1:8000/tasks");
-        })
-    .then(res => res.json())
-    .then(data => {
-        const table = document.getElementById("task-table");
-        table.innerHTML = ""; // 一旦消す
+                body: JSON.stringify({ title: newTitle })
+            })
+            .then(() => {
+                row.querySelector(".title").textContent = newTitle;
+            });
+        }
+        //削除
+         function deleteTask(id, btn) {
+            fetch(`${API_URL}/${id}`, {
+                method: "DELETE"
+            })
+            .then(() => {
+                // 行を削除
+                const row = btn.closest("tr");
+                row.remove();
 
-        data.forEach((task, index) => {
-            table.appendChild(createRow(task, index));
-        });
-    });
+                // No列を振り直す
+                updateRowNumbers();
+            });
+        }
+        // ==========================================
+        // No列を1から振り直す
+        // ==========================================
+        
+        function updateRowNumbers() {
+        // console.log("番号更新された"); // ←追加
+            const rows = document.querySelectorAll("#task_table tr");
 
-    input.value = "";
-}
-
-
-    function editTask(id, oldTitle, btn) {
-        const newTitle = prompt("新しいタスク名を入力", oldTitle);
-
-        if (!newTitle) return;
-
-        fetch(`http://127.0.0.1:8000/tasks/${id}`, {
-            method: "PUT",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({ title: newTitle })
-        })
-        .then(() => {
-            const row = btn.closest("tr");
-            row.querySelector(".title").textContent = newTitle;
-        });
-}
-    // 👇 削除
-    function deleteTask(id,btn) {
-        fetch(`http://127.0.0.1:8000/tasks/${id}`, {
-            method: "DELETE"
-        })
-        .then(() => {
-            const row = btn.closest("tr");
-            row.remove();
-
-            updateRowNumbers(); // 削除されたときのNOの更新
-        });
-}
-    
-    function updateRowNumbers() {
-    // console.log("番号更新された"); // ←追加
-        const rows = document.querySelectorAll("#task-table tr");
-
-        rows.forEach((row, index) => {
-            row.children[0].textContent = index + 1;
-        });
-    }
-    </script>
-</body>
-</html>
+            rows.forEach((row, index) => {
+                row.children[0].textContent = index + 1;
+            });
+        }
+        </script>
+    </body>
+    </html>
