@@ -2,6 +2,55 @@
 <html>
 <head>
     <title>Task List</title>
+
+    <style>
+        /* 全体のフォントと余白 */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+        }
+
+        /* 入力欄 */
+        input[type="text"] {
+            padding: 8px;
+            width: 250px;
+        }
+
+        /* ボタン */
+        button {
+            padding: 6px 12px;
+            cursor: pointer;
+        }
+
+        /* テーブル */
+        table {
+            border-collapse: collapse;
+            width: 700px;
+            margin-top: 20px;
+        }
+
+        /* ヘッダーとセル */
+        th, td {
+            border: 1px solid #ccc;
+            padding: 10px;
+            text-align: left;
+        }
+
+        /* ヘッダー背景 */
+        th {
+            background-color: #f5f5f5;
+        }
+
+        /* 偶数行の背景色 */
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        /* マウスを乗せた時 */
+        tr:hover {
+            background-color: #f0f8ff;
+        }
+    </style>
 </head>
 <body>
     <h1>タスク一覧</h1>
