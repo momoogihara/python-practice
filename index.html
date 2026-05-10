@@ -91,7 +91,7 @@
         // タスク一覧を取得してテーブルに表示
         // ==========================================
         function loadTasks() {
-          fetch("/tasks")
+          fetch(API_URL)
             .then(response => response.json())
             .then(data => {
                 const table = document.getElementById("task_table");
@@ -114,7 +114,7 @@
         row.innerHTML = `
             <td>${index + 1}</td>
             <td class="title">${task.title}</td>
-            <td><button onclick="editTask(${task.id}, '${task.title}', this)">編集</button></td>
+            <td><button onclick="editTask(${task.id},this)">編集</button></td>
             <td><button onclick="deleteTask(${task.id}, this)">削除</button></td>
         `;
         return row;
@@ -124,7 +124,7 @@
             // 入力欄を取得
             const input = document.getElementById("task-input");
             // 入力された文字列
-            const title = input.value;
+            const title = input.value.trim();
              // 空文字なら何もしない
             if (!title) return;
             // POST送信    
